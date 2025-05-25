@@ -15,15 +15,16 @@ public class FulinInterfaceFactory {
 
     private static final AtomicInteger count = new AtomicInteger();
 
-    private static File createJavaFile(String className) throws IOException {
+    private static File createJavaFile(String className, FulinHandler handler) throws IOException {
 
-        String func1Body = functionBody("func1");
-        String func2Body = functionBody("func2");
-        String func3Body = functionBody("func3");
+        String func1Body = handler.functionBody("func1");
+        String func2Body = handler.functionBody("func2");
+        String func3Body = handler.functionBody("func3");
 
         String context ="package com.fulin.proxy;\n" +
                 "\n" +
                 "public class "+className+" implements FulinInterface {\n" +
+                "FulinInterface fulinInterface;\n" +
                 "    @Override\n" +
                 "    public void func1() {\n" +
                 "        "+func1Body+"\n" +
@@ -48,22 +49,19 @@ public class FulinInterfaceFactory {
         return "FulinInterface$proxy" + count.incrementAndGet();
     }
 
-    private static String functionBody(String methodName){
-        return "System.out.println(\""+methodName+"\");";
-    }
-
-    private static FulinInterface newInstance(String className) throws Exception{
+    private static FulinInterface newInstance(String className,  FulinHandler handler) throws Exception{
         Class<?> aClass = FulinInterfaceFactory.class.getClassLoader().loadClass(className);
         Constructor<?> constructor = aClass.getConstructor();
         FulinInterface proxy = (FulinInterface) constructor.newInstance();
+        handler.setProxy(proxy);
         return proxy;
     }
 
-    public static FulinInterface createProxyObject() throws Exception {
+    public static FulinInterface createProxyObject(FulinHandler fulinHandler) throws Exception {
         String className = getClassName();
-        File javaFile = createJavaFile(className);
+        File javaFile = createJavaFile(className,fulinHandler);
         Compiler.compile(javaFile);
-        return newInstance("com.fulin.proxy."+className);
+        return newInstance("com.fulin.proxy."+className,fulinHandler);
     }
 
 }
